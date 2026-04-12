@@ -5,7 +5,7 @@ set -euo pipefail
 # Docker creates missing sources as directories, which breaks file mounts.
 
 # Directories
-mkdir -p "$HOME/.aws" "$HOME/.claude" "$HOME/.claude/projects" "$HOME/.config/gh"
+mkdir -p "$HOME/.aws" "$HOME/.claude" "$HOME/.claude/projects" "$HOME/.config/gh" "$HOME/.gemini"
 
 # Files (create only if missing)
 [[ -f "$HOME/.claude/.credentials.json" ]] || touch "$HOME/.claude/.credentials.json"

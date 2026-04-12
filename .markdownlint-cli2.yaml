@@ -5,6 +5,8 @@ config:
       - details
       - summary
       - description
+  MD036: false
+  MD040: false
   MD041: false
   MD060: false
 

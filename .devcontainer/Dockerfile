@@ -10,8 +10,9 @@ RUN apt-get update \
 # Install as vscode user
 USER vscode
 
-# Install Claude Code
-RUN curl -fsSL https://claude.ai/install.sh | bash
+# Install AI CLI tools
+RUN curl -fsSL https://claude.ai/install.sh | bash \
+    && curl -fsSL https://gh.io/copilot-install | bash
 
 # Install mise
 RUN curl --proto '=https' --tlsv1.2 -fsSL https://mise.run | sh
@@ -38,6 +39,10 @@ COPY --chown=vscode:vscode .mise.toml /home/vscode/.mise.toml
 RUN ~/.local/bin/mise trust /home/vscode/.mise.toml \
     && ~/.local/bin/mise install \
     && rm /home/vscode/.mise.toml
+
+# Install npm-based AI CLI tools (requires Node.js from mise)
+RUN eval "$(/home/vscode/.local/bin/mise activate bash)" \
+    && npm install -g @openai/codex @google/gemini-cli
 
 # Switch back to root for remaining setup
 USER root
