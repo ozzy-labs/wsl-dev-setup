@@ -1,0 +1,13 @@
+gitignore_excludes: true
+exclude:
+  - pnpm-lock.yaml
+
+formatter:
+  type: basic
+  indent: 2
+  line_ending: lf
+  retain_line_breaks_single: true
+  max_line_length: 120
+  scan_folded_as_literal: true
+  drop_merge_tag: true
+  pad_line_comments: 1
