@@ -36,13 +36,15 @@ RUN git clone --depth=1 https://github.com/zsh-users/zsh-autosuggestions \
 # GITHUB_TOKEN avoids GitHub API rate limits for aqua backend downloads
 ARG GITHUB_TOKEN
 COPY --chown=vscode:vscode .mise.toml /home/vscode/.mise.toml
+# NOTE: `mise install` may report "all tools are installed" in Docker even
+# when they are not. We install node/pnpm explicitly, then reference
+# npm via its mise install path to install Codex CLI and Gemini CLI.
 RUN ~/.local/bin/mise trust /home/vscode/.mise.toml \
+    && ~/.local/bin/mise install node@24 pnpm@10 \
+    && export PATH="$HOME/.local/bin:$HOME/.local/share/mise/installs/node/24/bin:$PATH" \
+    && npm install -g @openai/codex @google/gemini-cli \
     && ~/.local/bin/mise install \
     && rm /home/vscode/.mise.toml
-
-# Install npm-based AI CLI tools (requires Node.js from mise)
-RUN eval "$(/home/vscode/.local/bin/mise activate bash)" \
-    && npm install -g @openai/codex @google/gemini-cli
 
 # Switch back to root for remaining setup
 USER root
