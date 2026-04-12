@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-[ -n "${BASH_VERSION:-}" ] || exec bash "$0" "$@"
 set -euo pipefail
 
 readonly REPO_OWNER="ozzy-labs"
@@ -136,7 +135,7 @@ main() {
     download_to_stdout "$archive_url" | tar -xzf - -C "$tmp_dir"
 
     local extracted_dir
-    extracted_dir="$(find "$tmp_dir" -mindepth 1 -maxdepth 1 -type d | head -n 1)"
+    extracted_dir="$(find "$tmp_dir" -mindepth 1 -maxdepth 1 -type d | sort | head -n 1)"
     [ -n "$extracted_dir" ] || die "Failed to unpack downloaded archive"
 
     run_local "$target" "$extracted_dir"
