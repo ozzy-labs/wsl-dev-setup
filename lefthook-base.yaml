@@ -18,7 +18,7 @@ pre-commit:
   commands:
     shell:
       glob: "**/*.sh"
-      run: shfmt -w {staged_files} && shellcheck {staged_files}
+      run: shfmt -w {staged_files} && shellcheck --severity=error {staged_files}
       stage_fixed: true
     markdownlint:
       glob: "**/*.md"

@@ -8,6 +8,7 @@
 ## [Unreleased]
 
 ### 追加
+
 - Zsh環境セットアップスクリプト（`setup-zsh-ubuntu.sh`）
   - zsh本体のインストール
   - oh-my-zshフレームワークのインストール
@@ -26,7 +27,7 @@
   - バージョン管理ツール（Git, GitHub CLI, git-secrets）
   - コンテナツール（Docker Engine, Docker Compose）
   - クラウドツール（AWS CLI v2, Azure CLI, Google Cloud CLI）
-  - AIツール（Claude Code, Codex CLI）
+  - AIツール（Claude Code, Codex CLI, GitHub Copilot CLI, Gemini CLI）
   - 開発補助ツール（just, zoxide）
   - 冪等性保証（複数回実行しても安全）
   - 詳細なログ機能（トラブルシューティング用）

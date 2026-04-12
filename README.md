@@ -40,7 +40,7 @@ wsl-dev-setup/
 
 ## 3. Features
 
-- 🤖 **AI Development Tools** - Supports Claude Code and Codex CLI
+- 🤖 **AI Development Tools** - Supports Claude Code, Codex CLI, GitHub Copilot CLI, and Gemini CLI
 - 🐳 **Container Development** - Docker Engine and Docker Compose (essential for Dev Containers)
 - 📦 **Modern Package Management** - Volta (Node.js LTS), uv (Python latest stable), pnpm
 - ☁️ **Cloud Development** - AWS CLI v2, GitHub CLI
@@ -68,6 +68,8 @@ aws configure      # or: aws configure sso
 gh auth login
 claude auth login
 codex auth login
+copilot             # authenticate with /login on first launch
+gemini              # authenticate with Google account on first launch
 ```
 
 If you prefer to inspect the repository first:
@@ -211,6 +213,8 @@ You can run it either through `install.sh` or directly via `scripts/setup-local-
 8. **AI Tools**
    - **Claude Code** - Interactive development tool with Claude AI
    - **Codex CLI** - OpenAI Codex CLI (code generation AI)
+   - **GitHub Copilot CLI** - GitHub Copilot coding agent for the terminal
+   - **Gemini CLI** - Google Gemini AI agent for the terminal
 9. **Development Utilities**
    - **just** - Task runner
    - **zoxide** - Smarter cd command with directory jumping
@@ -261,27 +265,29 @@ exit
 **6.2.4 Recommended Post-Setup Steps**
 
 1. **Configure AWS credentials**:
+
    ```bash
    aws configure      # For IAM user
    aws configure sso  # For SSO
    ```
 
 2. **GitHub authentication**:
+
    ```bash
    gh auth login
    ```
 
-3. **Claude Code authentication**:
+3. **AI tool authentication**:
+
    ```bash
-   claude auth login
+   claude auth login   # Claude Code
+   codex auth login    # Codex CLI
+   copilot             # GitHub Copilot CLI (authenticate with /login on first launch)
+   gemini              # Gemini CLI (authenticate with Google account on first launch)
    ```
 
-4. **Codex CLI authentication**:
-   ```bash
-   codex auth login
-   ```
+4. **Verify tool installation**:
 
-5. **Verify tool installation**:
    ```bash
    # Version checks
    volta --version
@@ -293,12 +299,12 @@ exit
    gh --version
    claude --version
    codex --version
+   copilot --version
+   gemini --version
    docker --version
    docker compose version
    command -v git-secrets  # git-secrets doesn't have --version option
    just --version
-   claude --version
-   codex --version
    ```
 
 **6.2.5 Git Configuration**
@@ -317,6 +323,7 @@ The following settings are configured interactively during script execution:
 All critical operations include error checking with detailed information in a unified format:
 
 **Unified Error Message Format**:
+
 ```
 ⚠️  Error message
 ℹ️  Possible causes:
@@ -329,6 +336,7 @@ All critical operations include error checking with detailed information in a un
 ```
 
 **Example 1: apt update failure**
+
 ```bash
 ⚠️  システムパッケージの更新に失敗しました
 ℹ️  考えられる原因:
@@ -339,6 +347,7 @@ All critical operations include error checking with detailed information in a un
 ```
 
 **Example 2: Volta not found**
+
 ```bash
 ⚠️  Volta が見つかりません
 ℹ️  考えられる原因:
@@ -351,6 +360,7 @@ All critical operations include error checking with detailed information in a un
 ```
 
 **Example 3: Docker service startup failure**
+
 ```bash
 ⚠️  Docker サービスの起動に失敗しました
 ℹ️  考えられる原因:
@@ -376,6 +386,7 @@ SETUP_LOG=/tmp/setup.log ./install.sh local
 ```
 
 Logs include:
+
 - All output messages
 - Error messages
 - User input (Git configuration, etc.)
@@ -397,6 +408,7 @@ Logs include:
 ### 7.1 Common Issues
 
 **7.1.1 apt update fails**
+
 ```bash
 # Error message example
 ⚠️  Failed to update system packages
@@ -408,6 +420,7 @@ Logs include:
 ```
 
 **7.1.2 Volta/uv not found**
+
 ```bash
 # Error message example
 ⚠️  Volta not found
@@ -426,6 +439,7 @@ Logs include:
 ```
 
 **7.1.3 Docker won't start**
+
 ```bash
 # Error message example
 ⚠️  Failed to start Docker service
@@ -445,6 +459,7 @@ sudo docker run hello-world # Verify operation
 ```
 
 **7.1.4 Docker Compose not found**
+
 ```bash
 # Error message example
 ⚠️  Failed to install Docker Compose
@@ -464,6 +479,7 @@ sudo apt-get install -y docker-compose-plugin
 ```
 
 **7.1.5 Invalid Git email address**
+
 ```bash
 # Error message example
 ⚠️  Invalid email format
@@ -493,6 +509,7 @@ cat /home/user/setup-local-ubuntu-20250109-123456.log
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 For detailed review process, see:
+
 - [Review Process Guide](docs/review-process.md)
 - [Review Checklist](docs/review-checklist.md)
 
