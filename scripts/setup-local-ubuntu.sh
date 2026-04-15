@@ -557,7 +557,7 @@ install_ai_tools() {
       echo "  ✅ Codex CLI インストール完了"
     else
       echo "  ℹ️  Codex CLI を最新版に更新中..."
-      npm update -g @openai/codex >/dev/null 2>&1
+      npm update -g @openai/codex >/dev/null 2>&1 || true
       echo "  ⏭️  Codex CLI は最新版です"
     fi
   fi
@@ -593,7 +593,7 @@ install_ai_tools() {
       echo "  ✅ Gemini CLI インストール完了"
     else
       echo "  ℹ️  Gemini CLI を最新版に更新中..."
-      npm update -g @google/gemini-cli >/dev/null 2>&1
+      npm update -g @google/gemini-cli >/dev/null 2>&1 || true
       echo "  ⏭️  Gemini CLI は最新版です"
     fi
   fi
