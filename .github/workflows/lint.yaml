@@ -1,0 +1,57 @@
+name: lint
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Static analysis (shellcheck / shfmt / markdownlint / yaml / gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up mise
+        uses: jdx/mise-action@5cb1df66ed5e1fb3c670ea0b62fd17a76979826a # v2.4.3
+        with:
+          cache: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: shellcheck
+        run: |
+          mise exec -- shellcheck --severity=warning \
+            install.sh scripts/*.sh \
+            tests/smoke/run.sh tests/integration/*.sh
+
+      - name: shfmt
+        run: |
+          mise exec -- shfmt -d \
+            install.sh scripts/*.sh \
+            tests/smoke/run.sh tests/integration/*.sh
+
+      - name: markdownlint
+        run: mise exec -- markdownlint-cli2 '**/*.md'
+
+      - name: yamllint
+        run: |
+          # Only check files we author (workflows, mise config, etc.), not transient Docker / CI caches
+          mise exec -- yamllint -c .yamllint.yaml \
+            .github/workflows \
+            .mise.toml \
+            .markdownlint-cli2.yaml \
+            .yamllint.yaml \
+            lefthook.yaml \
+            lefthook-base.yaml \
+            2>/dev/null || true
+
+      - name: gitleaks
+        run: mise exec -- gitleaks detect --no-banner --redact -v
