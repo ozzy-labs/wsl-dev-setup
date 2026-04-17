@@ -51,8 +51,21 @@ running the full suite multiple times in short succession.
 | `test-smoke.yaml` | PR + main push | Runs `tests/smoke/run.sh` (no Docker) |
 | `test-unit.yaml` | PR + main push | Runs BATS suite via `mise` |
 | `test-integration.yaml` | main push, manual, or PR labeled `ci:integration` | Runs `tests/integration/run.sh` against 22.04 + 24.04 in matrix |
+| `canary.yaml` | Weekly (Mon 03:00 UTC) + manual | Runs the integration harness against `ubuntu:devel` / `ubuntu:rolling`; opens an issue on failure |
 
 Integration tests are opt-in for PRs (~5 min/version) to keep feedback fast on code-only changes. Add the `ci:integration` label when changing `scripts/setup-local-ubuntu.sh` or `tests/integration/`.
+
+### Canary triage
+
+When the Canary workflow fails it auto-creates an issue tagged `canary` + `investigation-needed`. The issue body contains the run URL and a triage checklist:
+
+1. **apt package renamed / removed** — next Ubuntu may have dropped or renamed a package (e.g. `tesseract-ocr-jpn`)
+2. **PPA no longer supports this Ubuntu version** — `ppa:git-core/ppa` for instance is added conditionally
+3. **Upstream tool breaking change** — mise / gitleaks / ast-grep etc. may have bumped major
+4. **Installer script behavior change** — `mise.run` / `astral.sh/uv` etc. may have changed flags
+5. **Transient network issue** — re-run `gh workflow run canary.yaml`; if it passes, close as "transient"
+
+Canary failures are non-blocking by design: they surface upstream change early so we can fix it before the next Ubuntu release lands.
 
 ### WSL2 pre-release smoke checklist
 
