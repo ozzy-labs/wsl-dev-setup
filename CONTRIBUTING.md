@@ -64,6 +64,8 @@ mise exec -- bats tests/unit/
 
 統合テストは PR では opt-in（1 バージョン約 5 分）で、コード変更のみの PR のフィードバックを高速に保ちます。統合テストが必要な範囲を変更する PR には `labeler.yaml` が自動で `ci:integration` ラベルを付与するため、通常は手動付与不要です。自動判定外のケースで必要な場合は手動付与も可能です。
 
+> **注意（GITHUB_TOKEN 起点のラベル付与制約）**: PR 初回 open 時に `labeler.yaml` が付けた `ci:integration` ラベルは、同時に走る `test-integration.yaml` の label チェックには間に合わないため、**初回のみ統合テストは skip**される。2 回目以降の push（`pull_request/synchronize`）では正常に発火する。初回から統合テストを走らせたい場合は、空コミット（`git commit --allow-empty`）で再 push するか、`gh workflow run test-integration.yaml --ref <branch>` で手動 dispatch する。
+
 ### Canary トリアージ
 
 Canary ワークフローが失敗すると、`canary` + `investigation-needed` ラベル付きの Issue が自動起票されます。Issue 本文には run URL とトリアージチェックリストが含まれます：
