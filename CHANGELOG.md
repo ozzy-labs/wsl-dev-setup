@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `scripts/update-tools.sh` to batch-update every tool across mise / uv tool / npm / native installer backends. Supports `--dry-run` and `SETUP_LOG` (#19).
 - `install.sh update` subcommand that delegates to the new update script (#19).
 - `ensure_mise_installed` helper function reused across mise-managed install flows.
+- **Layered test infrastructure** (#28 and sub-issues #29-#33): smoke / BATS unit / Docker integration / weekly canary (`ubuntu:devel` + `ubuntu:rolling`) with GitHub Actions workflows for each layer.
+- **Ubuntu 26.04 (Resolute Raccoon) readiness**: canary workflow verifies the toolchain against the next LTS dev snapshot. Added a 3-stage fallback for `wslu` (apt → PPA → graceful warning) so 26.04 users can install without `wslu` blocking the whole setup (#39).
+- **PR auto-labeler** (#46): PRs touching install / test paths receive the `ci:integration` label automatically so integration tests run without manual tagging.
+- **Canary duplicate-issue prevention** (#46): repeated canary failures on the same day comment on the existing issue instead of creating duplicates.
 
 ### Removed
 
@@ -37,6 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Docs
 
 - README.md / README.ja.md restructured to highlight AI-first, dual-mode (Dev Container / direct-host) workflows, document the new AI power tools and `update-tools.sh` script, and update verification commands.
+- README now advertises supported Ubuntu releases as a table (22.04 / 24.04 CI-verified, 25.10 / 26.04 canary-verified).
+- CONTRIBUTING.md rewritten in Japanese (matching the new Japanese-first internal artifact policy) with local test execution / WSL2 pre-release manual smoke checklist / canary triage.
 
 ## [0.1.0]
 

@@ -53,6 +53,7 @@ wsl-dev-setup/
 - 🔒 **Modern Secret Scanning** - gitleaks (2026 de-facto, actively maintained); pair with lefthook per project
 - 🎨 **Shell Experience** - zsh + oh-my-zsh + plugins, fzf / ripgrep / fd / jq / tree / wslu
 - 🔄 **One-shot Upgrades** - `install.sh update` batch-refreshes mise/uv/npm-managed tools
+- 🐧 **Ubuntu LTS Coverage** - CI-verified on 22.04 + 24.04; canary-tested on **26.04 Resolute Raccoon** (next LTS) so the toolchain continues to work the day 26.04 lands on WSL2
 - ✅ **Idempotency** - Safe to run multiple times
 - 📝 **Detailed Logging** - Optional log output for troubleshooting
 - 🛠️ **Unified Error Handling** - Clear error messages with actionable solutions
@@ -95,13 +96,24 @@ cd wsl-dev-setup
 
 These scripts are designed to set up the **WSL2/Ubuntu host**, and support both workflows below.
 
-### 5.1 Dev Container workflow (recommended)
+### 5.1 Supported Ubuntu releases
+
+| Release | Status |
+|---|---|
+| **22.04 LTS (Jammy Jellyfish)** | ✅ CI-verified every PR / main push |
+| **24.04 LTS (Noble Numbat)** | ✅ CI-verified every PR / main push |
+| **25.10 (Questing Quokka)** | ✅ Canary-verified weekly |
+| **26.04 LTS (Resolute Raccoon)** | ✅ Canary-verified weekly — ready for the next LTS the day it lands |
+
+The weekly canary workflow runs the full integration harness against `ubuntu:devel` and `ubuntu:rolling` Docker tags so upstream breaking changes (package renames, PPA removals, installer quirks) are caught before the next LTS ships.
+
+### 5.2 Dev Container workflow (recommended)
 
 - Host carries the bare minimum: Docker, mise, git, AI CLIs, AI power tools
 - Project-specific runtimes, linters, and formatters live inside each `.devcontainer/`
 - Matches the common team workflow where every project defines its own dev container
 
-### 5.2 Direct-host workflow
+### 5.3 Direct-host workflow
 
 - Host also installs Node.js LTS, pnpm, Python, uv via mise so you can develop directly on WSL
 - Per-project tools are managed via the project's own `.mise.toml`
