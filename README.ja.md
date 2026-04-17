@@ -53,6 +53,7 @@ wsl-dev-setup/
 - 🔒 **モダンなシークレット検知** - gitleaks（2026 デファクト、アクティブメンテ）を mise で導入、プロジェクト側の lefthook と連携
 - 🎨 **シェル体験** - zsh + oh-my-zsh + プラグイン、fzf / ripgrep / fd / jq / tree / wslu
 - 🔄 **ワンショット更新** - `install.sh update` で mise / uv / npm 管理ツールを一括更新
+- 🐧 **Ubuntu LTS 幅広くサポート** - 22.04 / 24.04 を PR / main push で CI 検証、**次期 LTS 26.04 Resolute Raccoon** も週次 canary で先行検証済み。LTS 切替直後も動作する
 - ✅ **冪等性保証** - 複数回実行しても安全
 - 📝 **詳細なログ機能** - トラブルシューティング用のログ出力（オプション）
 - 🛠️ **統一的なエラーハンドリング** - わかりやすいエラーメッセージと対処法
@@ -95,13 +96,24 @@ cd wsl-dev-setup
 
 これらのスクリプトは **WSL2/Ubuntu ホスト**のセットアップを目的としており、以下 2 つのワークフローに等しく対応します。
 
-### 5.1 Dev Container ワークフロー（推奨）
+### 5.1 サポート対象 Ubuntu リリース
+
+| リリース | 状態 |
+|---|---|
+| **22.04 LTS (Jammy Jellyfish)** | ✅ 全 PR / main push で CI 検証済み |
+| **24.04 LTS (Noble Numbat)** | ✅ 全 PR / main push で CI 検証済み |
+| **25.10 (Questing Quokka)** | ✅ 週次 Canary で検証済み |
+| **26.04 LTS (Resolute Raccoon)** | ✅ 週次 Canary で検証済み — 次期 LTS 切替直後から動作する |
+
+週次の Canary ワークフローが `ubuntu:devel` / `ubuntu:rolling` Docker タグに対して統合 harness を実行し、パッケージ名変更・PPA 廃止・インストーラ仕様変更などの上流破壊的変更を次期 LTS リリース前に検知します。
+
+### 5.2 Dev Container ワークフロー（推奨）
 
 - ホストには最小限の基盤（Docker / mise / git / AI CLI / AI パワーツール）のみ配置
 - プロジェクト固有のランタイム・リンター・フォーマッターは各 `.devcontainer/` 内で管理
 - 複数プロジェクトで dev container を使い分けるチームに最適
 
-### 5.2 直接開発ワークフロー
+### 5.3 直接開発ワークフロー
 
 - Node.js LTS / pnpm / Python / uv も mise でホストに導入し、WSL 上で直接開発可能
 - プロジェクト固有のツールはプロジェクトの `.mise.toml` で管理

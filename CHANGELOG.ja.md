@@ -27,6 +27,10 @@
 - `scripts/update-tools.sh` を新設し、mise / uv tool / npm / 独自インストーラを横断的に一括更新（`--dry-run` / `SETUP_LOG` 対応、#19）
 - `install.sh update` サブコマンド（上記スクリプトを呼び出す、#19）
 - `ensure_mise_installed` ヘルパー関数を追加（mise ベースのインストール関数で共通利用）
+- **層別テスト基盤**（#28 と Sub-Issues #29-#33）: smoke / BATS / Docker 統合 / 週次 Canary（`ubuntu:devel` + `ubuntu:rolling`）の各層に対応する GitHub Actions ワークフロー
+- **Ubuntu 26.04 Resolute Raccoon 対応**: Canary で次期 LTS 開発版に対する検証を継続。`wslu` が 26.04 の標準リポジトリから外れている問題に 3 段フォールバック（apt → PPA → 警告出して継続）を実装済み（#39）
+- **PR 自動ラベリング**（#46）: install/test 系パスを変更した PR に `ci:integration` ラベルを自動付与、手動タグ付け漏れによる統合テスト漏れを回避
+- **Canary 重複 Issue 抑止**（#46）: 同日複数失敗時は既存 Open Issue にコメントで再発を記録、重複起票を防止
 
 ### 削除
 
@@ -37,6 +41,8 @@
 ### ドキュメント
 
 - README.md / README.ja.md を AI ファースト・両モード対応を前提に再構成、新ツールと `update-tools.sh` を追記、動作確認コマンドを最新化
+- README にサポート Ubuntu リリース一覧表を追加（22.04 / 24.04 は CI 検証、25.10 / 26.04 は Canary 検証）
+- CONTRIBUTING.md を日本語で全面書き直し（内部成果物の日本語化方針に準拠）し、ローカルテスト実行手順 / WSL2 リリース前スモークチェック / Canary トリアージを追記
 
 ## [0.1.0]
 
