@@ -303,7 +303,7 @@ install_mise_and_languages() {
   else
     echo "  ℹ️  mise を最新版に更新中..."
     "$MISE_BIN" self-update -y >/dev/null 2>&1 || true
-    echo "  ⏭️  mise は最新版です ($("$MISE_BIN" --version 2>/dev/null | head -n1 | awk '{print $1}'))"
+    echo "  ⏭️  mise は最新版です ($("$MISE_BIN" --version 2>/dev/null | head -n1))"
   fi
 
   # 以降のコマンドで mise とそのシム（node, npm, python 等）を使えるようにする
