@@ -6,6 +6,7 @@ pinned:
   - .devcontainer/Dockerfile
   - .devcontainer/devcontainer.json
   - .devcontainer/initialize.sh
+  - .gitignore
   - .markdownlint-cli2.yaml
   - .mise.toml
   - .mcp.json
