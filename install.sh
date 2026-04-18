@@ -130,7 +130,12 @@ main() {
 
   local tmp_dir
   tmp_dir="$(mktemp -d)"
-  trap 'rm -rf "$tmp_dir"' EXIT
+  # trap は EXIT 発火時点（main 関数を抜けた後）にも評価されるため、
+  # local 変数を遅延展開すると set -u 下で unbound variable になる。
+  # ここでは tmp_dir の値を即時展開して固定文字列としてトラップに焼き込む。
+  # mktemp -d はシングルクォートを含むパスを返さないため安全。
+  # shellcheck disable=SC2064  # 即時展開は意図的（local スコープ問題の回避）
+  trap "rm -rf -- '$tmp_dir'" EXIT
 
   local archive_url
   archive_url="https://codeload.github.com/${REPO_OWNER}/${REPO_NAME}/tar.gz/${ref}"

@@ -96,6 +96,19 @@ assert_failure "install.sh rejects unknown flag" \
 assert_failure "install.sh rejects unknown positional arg" \
   bash install.sh unknown-subcommand
 
+# README §4 のクイックスタートで案内している `curl ... | bash -s -- ...`
+# 実行形態のサニティチェック。pipe 経由で実行されると BASH_SOURCE[0] が
+# ファイルとして存在しないため、install.sh はダウンロード経路に入る。
+# 過去に `local tmp_dir` を参照する EXIT trap が set -u 下で unbound に
+# なる回帰があったため、--help でも pipe 経路のスモークを残す。
+assert_stdout_contains "install.sh works via stdin pipe (curl|bash style)" \
+  "Usage:" \
+  bash -c 'cat install.sh | bash -s -- --help'
+
+assert_stdout_contains "install.sh --ref accepts value via stdin pipe" \
+  "Usage:" \
+  bash -c 'cat install.sh | bash -s -- --ref main --help'
+
 # ------------------------------------------------------------------
 # 2. update-tools.sh の引数解析 / --dry-run
 # ------------------------------------------------------------------
