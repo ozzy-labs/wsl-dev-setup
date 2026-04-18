@@ -78,4 +78,45 @@ for anchor in \
   fi
 done
 
-printf '\n✅ Integration test passed (both runs completed, no shell config duplication)\n'
+printf '\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
+printf '🔵 Pipe-mode regression (curl|bash style)\n'
+printf '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n'
+
+# README §4 で案内している `curl ... | bash -s -- ...` 実行形態の回帰テスト。
+# 過去に以下 2 件のバグがどのテスト層でも検出されなかったため、
+# pipe 経由の実行を明示的に踏ませて回帰を防ぐ:
+#   1. install.sh の EXIT trap が `local tmp_dir` を遅延展開し、
+#      set -u 下で unbound variable で死ぬ
+#   2. setup-zsh-ubuntu.sh の `read -p` が pipe 越し EOF + set -e で
+#      入力プロンプト到達と同時に終了する
+
+# --- 1. install.sh の EXIT trap が pipe 経由でも安全に発火することを確認 ---
+# 存在しない ref を指定して download を確実に失敗させ、EXIT trap が
+# unbound variable で死んでいないことだけを検証する（set -u 違反の検出）。
+PIPE_INSTALL_LOG="/tmp/pipe-install.log"
+cat /workspace/install.sh |
+  WSL_DEV_SETUP_REF="non-existent-ref-for-trap-regression-$$" bash -s -- local \
+    >"$PIPE_INSTALL_LOG" 2>&1 || true
+if grep -qE "unbound variable" "$PIPE_INSTALL_LOG"; then
+  echo "❌ install.sh emitted 'unbound variable' under pipe execution:"
+  grep -E "unbound variable" "$PIPE_INSTALL_LOG" || true
+  exit 1
+fi
+echo "✅ install.sh EXIT trap is safe under pipe execution"
+
+# --- 2. setup-zsh-ubuntu.sh が pipe 経由でも完走することを確認 ---
+# CI=true により非対話モードで実行され、対話プロンプトはすべて既定値で
+# 自動回答される。read -p が EOF で失敗していれば set -e で即死する。
+PIPE_ZSH_LOG="/tmp/pipe-zsh.log"
+if ! cat /workspace/scripts/setup-zsh-ubuntu.sh | bash >"$PIPE_ZSH_LOG" 2>&1; then
+  echo "❌ setup-zsh-ubuntu.sh failed under pipe execution. Log:"
+  cat "$PIPE_ZSH_LOG"
+  exit 1
+fi
+if grep -qE "unbound variable" "$PIPE_ZSH_LOG"; then
+  echo "❌ setup-zsh-ubuntu.sh emitted 'unbound variable' under pipe execution"
+  exit 1
+fi
+echo "✅ setup-zsh-ubuntu.sh completes under pipe execution"
+
+printf '\n✅ Integration test passed (both runs completed, no shell config duplication, pipe-mode OK)\n'

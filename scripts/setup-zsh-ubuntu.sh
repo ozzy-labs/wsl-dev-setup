@@ -14,6 +14,53 @@ INSTALL_COMPLETIONS=1
 INSTALL_HISTORY_SUBSTRING_SEARCH=1
 
 # ========================================
+# 対話/非対話モード制御
+# ========================================
+
+# 非対話モードかどうかを判定
+# WSL_DEV_SETUP_ASSUME_YES=1 or CI=true でプロンプトを自動回答する
+_is_non_interactive() {
+  [ "${WSL_DEV_SETUP_ASSUME_YES:-0}" = "1" ] || [ "${CI:-}" = "true" ]
+}
+
+# パイプ実行時 (curl ... | bash) でも対話プロンプトが動作するよう、
+# stdin が tty でなく /dev/tty が読める場合は /dev/tty にフォールバックする。
+# 非対話モード（CI / ASSUME_YES）ではフォールバックしない。
+if [ ! -t 0 ] && [ -r /dev/tty ] && ! _is_non_interactive; then
+  exec </dev/tty
+fi
+
+# [Y/n] プロンプト（既定 Y）を処理し、REPLY に結果を設定する
+# 非対話時は read をスキップして REPLY=Y を即設定
+# $1: プロンプト文字列
+_prompt_default_yes() {
+  local prompt="$1"
+  if _is_non_interactive; then
+    REPLY=Y
+    printf '%sY (non-interactive)\n' "$prompt"
+    return 0
+  fi
+  REPLY=""
+  read -p "$prompt" -n 1 -r || true
+  echo ""
+}
+
+# [y/N] プロンプト（既定 N）を処理し、REPLY に結果を設定する
+# 非対話時は read をスキップして REPLY=N を即設定
+# $1: プロンプト文字列
+_prompt_default_no() {
+  local prompt="$1"
+  if _is_non_interactive; then
+    REPLY=N
+    printf '%sN (non-interactive)\n' "$prompt"
+    return 0
+  fi
+  REPLY=""
+  read -p "$prompt" -n 1 -r || true
+  echo ""
+}
+
+# ========================================
 # ユーティリティ関数
 # ========================================
 
@@ -261,8 +308,7 @@ fi
 if ! grep -qi "ubuntu\|debian" /etc/os-release 2>/dev/null; then
   echo "⚠️  このスクリプトは Ubuntu/Debian 系ディストリビューション用です"
   echo "ℹ️  現在の OS: $(grep PRETTY_NAME /etc/os-release | cut -d'"' -f2)"
-  read -p "続行しますか？ (y/N): " -n 1 -r
-  echo
+  _prompt_default_no "続行しますか？ (y/N): "
   echo "ℹ️  ユーザー入力: $REPLY" # ログに記録
   if [[ ! $REPLY =~ ^[Yy]$ ]]; then
     echo "スクリプトを中止しました"
@@ -291,8 +337,8 @@ echo "すべてのプラグインをインストールしますか？"
 echo "  y: すべてインストール（デフォルト）"
 echo "  n: 個別に選択"
 echo ""
-read -p "選択 [Y/n]: " -n 1 -r INSTALL_ALL_PLUGINS
-echo ""
+_prompt_default_yes "選択 [Y/n]: "
+INSTALL_ALL_PLUGINS="$REPLY"
 echo "ℹ️  ユーザー入力: ${INSTALL_ALL_PLUGINS:-Y}"
 
 if [[ ! $INSTALL_ALL_PLUGINS =~ ^[Yy]?$ ]]; then
@@ -303,23 +349,19 @@ if [[ ! $INSTALL_ALL_PLUGINS =~ ^[Yy]?$ ]]; then
   echo ""
 
   # zsh-completions
-  read -p "📚 zsh-completions (追加の補完定義) をインストールしますか? [Y/n]: " -n 1 -r
-  echo ""
+  _prompt_default_yes "📚 zsh-completions (追加の補完定義) をインストールしますか? [Y/n]: "
   [[ $REPLY =~ ^[Nn]$ ]] && INSTALL_COMPLETIONS=0
 
   # zsh-autosuggestions
-  read -p "💡 zsh-autosuggestions (コマンド補完候補) をインストールしますか? [Y/n]: " -n 1 -r
-  echo ""
+  _prompt_default_yes "💡 zsh-autosuggestions (コマンド補完候補) をインストールしますか? [Y/n]: "
   [[ $REPLY =~ ^[Nn]$ ]] && INSTALL_AUTOSUGGESTIONS=0
 
   # zsh-history-substring-search
-  read -p "🔍 zsh-history-substring-search (履歴検索強化) をインストールしますか? [Y/n]: " -n 1 -r
-  echo ""
+  _prompt_default_yes "🔍 zsh-history-substring-search (履歴検索強化) をインストールしますか? [Y/n]: "
   [[ $REPLY =~ ^[Nn]$ ]] && INSTALL_HISTORY_SUBSTRING_SEARCH=0
 
   # zsh-syntax-highlighting
-  read -p "🎨 zsh-syntax-highlighting (シンタックスハイライト) をインストールしますか? [Y/n]: " -n 1 -r
-  echo ""
+  _prompt_default_yes "🎨 zsh-syntax-highlighting (シンタックスハイライト) をインストールしますか? [Y/n]: "
   [[ $REPLY =~ ^[Nn]$ ]] && INSTALL_SYNTAX_HIGHLIGHTING=0
 fi
 
