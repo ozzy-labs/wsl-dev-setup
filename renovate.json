@@ -2,6 +2,9 @@
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
 	"extends": [
 		"github>ozzy-labs/.github",
-		"github>ozzy-labs/skills//skills-sync"
+		"github>ozzy-labs/skills//skills-sync/claude-code",
+		"github>ozzy-labs/skills//skills-sync/codex-cli",
+		"github>ozzy-labs/skills//skills-sync/gemini-cli",
+		"github>ozzy-labs/skills//skills-sync/copilot"
 	]
 }
