@@ -12,6 +12,11 @@ setup() {
   SCRIPT_ROOT="$(cd "$BATS_TEST_DIRNAME/../.." && pwd)"
   # 実ホームを汚染しないよう tmpdir を HOME として使用
   export HOME="$BATS_TEST_TMPDIR"
+
+  # Git identity の設定 (canonical pattern)
+  git config --global user.email "test@example.com"
+  git config --global user.name "Test User"
+
   # setup-local-ubuntu.sh の上から関数定義部分までを source してロード
   # メイン処理（最下部の実行ブロック）を走らせないよう、関数定義セクションだけを抽出
   _script="$SCRIPT_ROOT/scripts/setup-local-ubuntu.sh"
