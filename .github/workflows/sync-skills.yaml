@@ -1,0 +1,104 @@
+name: Sync skills
+
+# Renovate (skills-sync preset) が .dev-config/sync.yaml の skills_commit を更新する。
+# 本ワークフローは skills_commit に対応する skills repo の dist/.agents/skills/ を
+# .agents/skills/ にコピーし、差分があれば PR を作成する。
+#
+# 役割分担:
+#   - Renovate: 上流 SHA の追跡（skills_commit の bump）
+#   - 本ワークフロー: 物理ファイルの同期（dist → .agents/skills/）
+#
+# 移行期間中は commons の dist/.agents/skills/ も sync-commons 経由で配信される
+# 可能性がある（ADR-0016 で許容済みの一時的状態）。
+on:
+  schedule:
+    # Every Monday 00:00 UTC（sync-commons と同じ枠で運用）
+    - cron: "0 0 * * 1"
+  push:
+    branches: [main]
+    paths:
+      - .dev-config/sync.yaml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    name: Sync skills from ozzy-labs/skills
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout this repo
+        uses: actions/checkout@v4
+
+      - name: Read skills_commit from sync.yaml
+        id: read
+        run: |
+          set -euo pipefail
+          SHA=$(grep -E '^skills_commit:' .dev-config/sync.yaml | awk '{print $2}')
+          if [[ -z "${SHA}" ]]; then
+            echo "Error: skills_commit not found in .dev-config/sync.yaml" >&2
+            exit 1
+          fi
+          echo "sha=${SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Clone skills at recorded commit
+        uses: actions/checkout@v4
+        with:
+          repository: ozzy-labs/skills
+          ref: ${{ steps.read.outputs.sha }}
+          path: .sync-skills
+          # skills repo は PoC 期間中は private のため認証が必要。
+          # public 切替後も token 渡し自体は安全なのでそのまま残す。
+          token: ${{ secrets.RENOVATE_TOKEN }}
+
+      - name: Copy dist/.agents/skills/ → .agents/skills/
+        id: copy
+        run: |
+          set -euo pipefail
+          SRC=".sync-skills/dist/.agents/skills"
+          DST=".agents/skills"
+          if [[ ! -d "${SRC}" ]]; then
+            echo "Error: ${SRC} does not exist in skills repo at recorded commit" >&2
+            exit 1
+          fi
+          mkdir -p "${DST}"
+          # skills repo dist 由来の skill ディレクトリのみを上書きコピーする。
+          # bootstrap 固有の README.md など、dist に存在しないファイルは保持する。
+          for skill_dir in "${SRC}"/*/; do
+            name=$(basename "${skill_dir}")
+            rm -rf "${DST:?}/${name}"
+            cp -r "${skill_dir}" "${DST}/${name}"
+          done
+          rm -rf .sync-skills
+          # untracked な新規 skill ディレクトリも検出する必要があるため
+          # git diff ではなく git status --porcelain を使う
+          if [[ -z "$(git status --porcelain -- "${DST}")" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No changes to sync."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create Pull Request
+        if: steps.copy.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/sync-skills
+          base: main
+          commit-message: |
+            chore: sync skills from ozzy-labs/skills
+
+            Automated sync from ozzy-labs/skills at ${{ steps.read.outputs.sha }}.
+          title: "chore: sync skills from ozzy-labs/skills"
+          body: |
+            Automated sync from
+            [ozzy-labs/skills](https://github.com/ozzy-labs/skills) at
+            `${{ steps.read.outputs.sha }}`.
+
+            Source: `dist/.agents/skills/` → `.agents/skills/`
+
+            Triggered by the `Sync skills` workflow. Review the diff and merge when appropriate.
+          labels: chore,skills-sync
+          delete-branch: true
