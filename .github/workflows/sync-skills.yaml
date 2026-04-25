@@ -1,6 +1,6 @@
 name: Sync skills
 
-# Renovate (skills-sync/<adapter> presets) が .dev-config/sync.yaml の skills_commit を更新する。
+# Renovate (skills-sync/<adapter> presets) が .commons/sync.yaml の skills_commit を更新する。
 # 本ワークフローは skills_commit に対応する skills repo の adapter 出力（dist/{adapter}/）
 # を 4 エージェント分の配置に同期し、差分があれば PR を作成する。
 #
@@ -22,7 +22,7 @@ on:
   push:
     branches: [main]
     paths:
-      - .dev-config/sync.yaml
+      - .commons/sync.yaml
   workflow_dispatch:
 
 permissions:
@@ -41,9 +41,9 @@ jobs:
         id: read
         run: |
           set -euo pipefail
-          SHA=$(grep -E '^skills_commit:' .dev-config/sync.yaml | awk '{print $2}')
+          SHA=$(grep -E '^skills_commit:' .commons/sync.yaml | awk '{print $2}')
           if [[ -z "${SHA}" ]]; then
-            echo "Error: skills_commit not found in .dev-config/sync.yaml" >&2
+            echo "Error: skills_commit not found in .commons/sync.yaml" >&2
             exit 1
           fi
           echo "sha=${SHA}" >> "$GITHUB_OUTPUT"

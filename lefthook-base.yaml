@@ -1,4 +1,4 @@
-# Shared base config from dev-config
+# Shared base config from commons
 # Extend this in your repo's lefthook.yaml:
 #
 #   extends:
