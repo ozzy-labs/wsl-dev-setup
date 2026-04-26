@@ -1,6 +1,6 @@
 ---
 description: コード変更や PR をレビューし、問題点・改善案を報告する
-argument-hint: "<#PR-number | (blank for working tree changes)>"
+argument-hint: <#PR-number | (blank for working tree changes)>
 disable-model-invocation: true
 allowed-tools: Bash, Read, Edit, Write, Grep, Glob, AskUserQuestion
 ---
