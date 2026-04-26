@@ -1,6 +1,6 @@
 ---
-description: Issue から実装・PR 作成・セルフレビュー・修正を自動で回し、merge-ready な PR を出す
-argument-hint: "<#issue-number | instruction>"
+description: Issue から実装・PR 作成・セルフレビュー・修正を自動で回し、merge-ready な PR を出す。オプションでマージまで実行可能。
+argument-hint: <#issue-number | instruction> [--merge]
 disable-model-invocation: true
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch, WebFetch, AskUserQuestion
 ---
@@ -15,11 +15,11 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch, WebFetch, AskUser
 
 ### 入力解析
 
-`$ARGUMENTS` を解析し、要件を特定する。
+`$ARGUMENTS` を解析し、対象（Issue/指示）とオプション（`--merge` の有無）を特定する。
 
 ### 自律実行
 
-計画承認を含め、マージ前まで AskUserQuestion を使用しない（完全自律実行）。
+計画承認を含め、マージ処理（またはマージ確認）まで AskUserQuestion を使用しない（完全自律実行）。
 
 ### 中断時
 
@@ -30,7 +30,9 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch, WebFetch, AskUser
 
 ### 完了後
 
-AskUserQuestion を呼び出す（`answers` パラメータは設定しない）:
-
-- **「PR をマージする」** → `gh pr merge --squash --delete-branch` でマージを実行し、結果を報告する
-- **「追加の変更を行う」** → 終了する
+1. **自動マージが指定されている場合 (`--merge`):**
+   - Phase 4 の手順に従いマージを実行し、結果を報告して終了する。
+2. **自動マージが指定されていない場合:**
+   - AskUserQuestion を呼び出す（`answers` パラメータは設定しない）:
+     - **「PR をマージする」** → `gh pr merge --squash --delete-branch` でマージを実行し、結果を報告する
+     - **「追加の変更を行う」** → 終了する
