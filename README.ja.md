@@ -2,9 +2,18 @@
 
 **開発ホストを AI エージェント駆動開発向けにワンコマンド構築 — WSL2 / Linux (Ubuntu/Debian-based) / macOS、Dev Container / 直接開発の両対応**
 
+[![Lint](https://github.com/ozzy-labs/bootstrap/actions/workflows/lint.yaml/badge.svg)](https://github.com/ozzy-labs/bootstrap/actions/workflows/lint.yaml)
+[![Unit](https://github.com/ozzy-labs/bootstrap/actions/workflows/test-unit.yaml/badge.svg)](https://github.com/ozzy-labs/bootstrap/actions/workflows/test-unit.yaml)
+[![Smoke](https://github.com/ozzy-labs/bootstrap/actions/workflows/test-smoke.yaml/badge.svg)](https://github.com/ozzy-labs/bootstrap/actions/workflows/test-smoke.yaml)
+[![Integration](https://github.com/ozzy-labs/bootstrap/actions/workflows/test-integration.yaml/badge.svg)](https://github.com/ozzy-labs/bootstrap/actions/workflows/test-integration.yaml)
+[![License: MIT](https://img.shields.io/github/license/ozzy-labs/bootstrap)](LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/ozzy-labs/bootstrap?include_prereleases&label=release)](https://github.com/ozzy-labs/bootstrap/releases/latest)
+
 **[English](README.md) | 日本語**
 
 開発ホスト（WSL2 / Linux (Ubuntu/Debian-based) / macOS）を、モダンな AI エージェント駆動開発の前提が揃った状態にする包括的なセットアップスクリプト集です。**Dev Container 前提（推奨）**でも **直接ホストで開発**でも同じ基盤で動作します。AI エージェント CLI（Claude Code / Codex / Copilot / Gemini）と、エージェントが文書を読み・コードを検索し・構造化データを操作するための AI パワーツール（markitdown / ast-grep / yq / OCR / 音声処理）を標準搭載しています。
+
+> **なぜ Bash + `curl | bash` なのか?** 本プロジェクトは意識的に **Node.js / npm / コンパイル済みバイナリに依存しない単一の Bash スクリプト** として配布しています。ランタイムを *インストールする* ツールがランタイムを *要求する* のは設計上不自然だからです。トレードオフ（リッチな TUI を持たない）と引き換えに得られるのは、**まっさらなマシンで初日から動くワンライナーインストール** という強い資産。詳しい意思決定は [ADR-0004](./docs/adr/ADR-0004-stay-bash-and-publish-readiness.md) を参照。
 
 ## 目次
 
@@ -18,6 +27,7 @@
   - [6.2 setup-local-linux.sh](#62-setup-local-linuxsh)
   - [6.3 setup-local-macos.sh](#63-setup-local-macossh)
   - [6.4 update-tools.sh](#64-update-toolssh)
+  - [6.5 doctor.sh](#65-doctorsh)
 - [7. トラブルシューティング](#7-トラブルシューティング)
 - [8. コントリビューション](#8-コントリビューション)
 - [9. 変更履歴](#9-変更履歴)
@@ -64,16 +74,20 @@ bootstrap/
 
 ## 4. クイックスタート
 
+> **推奨呼び出し** には `--proto '=https' --tlsv1.2` を付けて TLS バージョンを明示的に固定します。これにより HTTP へのリダイレクトや TLS 1.1 以下のフォールバックを拒否できます（`rustup` / `mise` と同じパターン）。
+
 ```bash
 # 1. zsh セットアップ（推奨：最初に実行）
-curl -fsSL https://raw.githubusercontent.com/ozzy-labs/bootstrap/main/install.sh | bash -s -- zsh
+curl --proto '=https' --tlsv1.2 -fsSL \
+  https://raw.githubusercontent.com/ozzy-labs/bootstrap/main/install.sh | bash -s -- zsh
 
 # 2. ターミナルを再起動
 exit
 # 新しいターミナルを開く
 
 # 3. 開発ツールをセットアップ（mise, 言語環境, Docker, AI CLI, AI パワーツール等）
-curl -fsSL https://raw.githubusercontent.com/ozzy-labs/bootstrap/main/install.sh | bash -s -- local
+curl --proto '=https' --tlsv1.2 -fsSL \
+  https://raw.githubusercontent.com/ozzy-labs/bootstrap/main/install.sh | bash -s -- local
 
 # 4. インストール済みのものだけ認証を完了
 aws configure      # または aws configure sso
@@ -85,9 +99,49 @@ gemini              # 初回起動時に Google アカウントで認証
 
 # 5. 後日: mise / uv / npm 管理ツールをまとめて最新化
 ./install.sh update
+
+# 6. 環境の整合性を診断（任意のタイミング）
+./install.sh doctor
 ```
 
-事前に内容を確認したい場合は、従来どおり clone してから実行できます。
+### 4.1 内容を確認してから実行（本番ホスト推奨）
+
+実行前にスクリプトを読みたい場合は、ダウンロードして検査してから実行できます。
+
+```bash
+# 一時ファイルにダウンロード
+curl --proto '=https' --tlsv1.2 -fsSL \
+  https://raw.githubusercontent.com/ozzy-labs/bootstrap/main/install.sh \
+  -o /tmp/bootstrap-install.sh
+
+# 内容を確認
+less /tmp/bootstrap-install.sh
+
+# 実行
+bash /tmp/bootstrap-install.sh local
+```
+
+### 4.2 SHA256 でリリース版を検証する
+
+ピン留めした再現可能なインストールには、タグ付きリリースを使ってください。各 GitHub Release には `install.sh` と `install.sh.sha256` が同梱されています。
+
+```bash
+# 特定リリースに固定（v0.1.0 を最新タグに置き換える）
+TAG=v0.1.0
+BASE="https://github.com/ozzy-labs/bootstrap/releases/download/${TAG}"
+
+# スクリプトとチェックサムをダウンロード
+curl --proto '=https' --tlsv1.2 -fsSL "${BASE}/install.sh" -o install.sh
+curl --proto '=https' --tlsv1.2 -fsSL "${BASE}/install.sh.sha256" -o install.sh.sha256
+
+# 検証（"install.sh: OK" と出れば成功）
+sha256sum -c install.sh.sha256
+
+# 検証成功後にのみ実行
+bash install.sh local
+```
+
+### 4.3 clone して実行（コントリビュータ / fork 利用者向け）
 
 ```bash
 git clone https://github.com/ozzy-labs/bootstrap.git
@@ -547,6 +601,63 @@ SETUP_LOG=/tmp/update.log ./install.sh update
 - 耐障害性: 個別コマンドの失敗は警告表示のみで、全体処理は継続
 - ログ対応: `setup-local-linux.sh` と同じ `SETUP_LOG` 規約に従う
 - クロス OS: Linux（WSL2 / 非 WSL）と macOS で同等に動作
+
+---
+
+### 6.5 doctor.sh
+
+セットアップ済みの環境の整合性を診断するコマンド（変更は加えない）。OS アップデート後に動作が怪しい時や、新しいプロジェクトのセットアップでつまずいた際の状態確認に使えます。
+
+**6.5.1 診断項目**
+
+- **システム基本ツール** — `curl`, `git`, `unzip`, `xz`, `tar` の存在確認
+- **mise** — `~/.local/bin/mise` のバイナリ、`~/.local/bin` および mise shims の PATH 設定
+- **mise 管理ツール** — `node`, `pnpm`, `python`, `uv` が mise グローバル管理下か
+- **chezmoi drift** — リポジトリ内 `dotfiles/` との差分（`chezmoi diff`）を検出
+- **`~/.zshrc.d/`** — ディレクトリの存在と `~/.zshrc` からの読み込み設定
+
+**6.5.2 終了コード**
+
+| Code | 意味 |
+|---|---|
+| `0` | 健全（warning / error なし） |
+| `1` | 警告のみ（推奨ツール未インストール、drift 検出） |
+| `2` | エラーあり（必須システムツール欠落） |
+
+このため CI / ヘルスチェックパイプラインで `./install.sh doctor || echo "needs attention"` のように使えます（実問題がある時のみ非 0 で抜ける）。
+
+**6.5.3 使い方**
+
+```bash
+# install.sh dispatcher 経由
+./install.sh doctor
+
+# 直接実行
+./scripts/doctor.sh
+```
+
+`✅` 以外の各項目には対処コマンドがコピペ可能な形で併記されます。Doctor は **修復を実行しません** — コマンドを提示するだけで、実行判断はユーザーに委ねます。
+
+**6.5.4 出力例**
+
+```
+🩺 bootstrap doctor を実行中...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 診断結果
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ [system-tools] curl: 利用可能
+✅ [system-tools] git: 利用可能
+✅ [mise] mise が利用可能 (2026.4.20 linux-x64)
+⚠️  [mise] PATH に mise shims が含まれていない（mise activate が必要）
+   ↳ 対処: eval "$(mise activate bash)"  # または zsh
+✅ [mise-tools] node は mise 管理下 (current: 24.15.0)
+⚠️  [chezmoi] ドットファイルに drift あり (12 行の差分)
+   ↳ 対処: chezmoi apply --source /path/to/bootstrap/dotfiles
+
+サマリー: ✅ 11  ⚠️  2  ❌ 0
+```
 
 ---
 
