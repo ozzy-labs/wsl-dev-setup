@@ -2,9 +2,18 @@
 
 **One-shot host setup for AI-agent-driven development — WSL2 / Linux (Ubuntu/Debian-based) / macOS, Dev Container or direct host use**
 
+[![Lint](https://github.com/ozzy-labs/bootstrap/actions/workflows/lint.yaml/badge.svg)](https://github.com/ozzy-labs/bootstrap/actions/workflows/lint.yaml)
+[![Unit](https://github.com/ozzy-labs/bootstrap/actions/workflows/test-unit.yaml/badge.svg)](https://github.com/ozzy-labs/bootstrap/actions/workflows/test-unit.yaml)
+[![Smoke](https://github.com/ozzy-labs/bootstrap/actions/workflows/test-smoke.yaml/badge.svg)](https://github.com/ozzy-labs/bootstrap/actions/workflows/test-smoke.yaml)
+[![Integration](https://github.com/ozzy-labs/bootstrap/actions/workflows/test-integration.yaml/badge.svg)](https://github.com/ozzy-labs/bootstrap/actions/workflows/test-integration.yaml)
+[![License: MIT](https://img.shields.io/github/license/ozzy-labs/bootstrap)](LICENSE)
+[![Latest Release](https://img.shields.io/github/v/release/ozzy-labs/bootstrap?include_prereleases&label=release)](https://github.com/ozzy-labs/bootstrap/releases/latest)
+
 **English | [日本語](README.ja.md)**
 
 A comprehensive collection of shell scripts that bootstraps a development host (WSL2, Linux (Ubuntu/Debian-based), or macOS) with everything needed for modern, AI-agent-driven development. Works equally well whether you develop **inside Dev Containers** (recommended) or **directly on the host**. Ships AI agent CLIs (Claude Code / Codex / Copilot / Gemini) alongside a curated set of AI power tools (markitdown, ast-grep, yq, OCR/audio backends) so agents can read documents, search code, and operate on structured data out of the box.
+
+> **Why Bash + `curl | bash`?** This project consciously stays a single shell script with zero runtime dependencies — no Node.js, no npm, no compiled binary. Setup tools that *install* runtimes shouldn't *require* a runtime. The trade-off (no rich TUI) buys a strong asset: a one-line install that works on a fresh machine the day you provision it. See [ADR-0004](./docs/adr/ADR-0004-stay-bash-and-publish-readiness.md) for the full rationale.
 
 ## Table of Contents
 
@@ -18,6 +27,7 @@ A comprehensive collection of shell scripts that bootstraps a development host (
   - [6.2 setup-local-linux.sh](#62-setup-local-linuxsh)
   - [6.3 setup-local-macos.sh](#63-setup-local-macossh)
   - [6.4 update-tools.sh](#64-update-toolssh)
+  - [6.5 doctor.sh](#65-doctorsh)
 - [7. Troubleshooting](#7-troubleshooting)
 - [8. Contributing](#8-contributing)
 - [9. Changelog](#9-changelog)
@@ -64,16 +74,20 @@ bootstrap/
 
 ## 4. Quick Start
 
+> **Recommended invocation** uses explicit TLS pinning (`--proto '=https' --tlsv1.2`) so the install pipeline rejects any redirect to plain HTTP and any TLS version below 1.2. This is the same pattern used by `rustup` and `mise`.
+
 ```bash
 # 1. Set up zsh (recommended first)
-curl -fsSL https://raw.githubusercontent.com/ozzy-labs/bootstrap/main/install.sh | bash -s -- zsh
+curl --proto '=https' --tlsv1.2 -fsSL \
+  https://raw.githubusercontent.com/ozzy-labs/bootstrap/main/install.sh | bash -s -- zsh
 
 # 2. Restart your terminal
 exit
 # Open a new terminal
 
 # 3. Set up development tools (mise, languages, Docker, AI CLIs, AI power tools, ...)
-curl -fsSL https://raw.githubusercontent.com/ozzy-labs/bootstrap/main/install.sh | bash -s -- local
+curl --proto '=https' --tlsv1.2 -fsSL \
+  https://raw.githubusercontent.com/ozzy-labs/bootstrap/main/install.sh | bash -s -- local
 
 # 4. Complete required authentications (for what you installed)
 aws configure      # or: aws configure sso
@@ -85,9 +99,49 @@ gemini              # authenticate with Google account on first launch
 
 # 5. Later: upgrade every mise / uv / npm managed tool in one shot
 ./install.sh update
+
+# 6. Verify environment health any time
+./install.sh doctor
 ```
 
-If you prefer to inspect the repository first:
+### 4.1 Inspect-before-run (recommended for production hosts)
+
+If you prefer to read the script before running it, download first and review:
+
+```bash
+# Download to a temp file
+curl --proto '=https' --tlsv1.2 -fsSL \
+  https://raw.githubusercontent.com/ozzy-labs/bootstrap/main/install.sh \
+  -o /tmp/bootstrap-install.sh
+
+# Review the contents
+less /tmp/bootstrap-install.sh
+
+# Run it
+bash /tmp/bootstrap-install.sh local
+```
+
+### 4.2 Verify a release with SHA256
+
+For pinned, reproducible installs, use a tagged release. Each GitHub Release ships `install.sh` and `install.sh.sha256`:
+
+```bash
+# Pin to a specific release (replace v0.1.0 with the latest tag)
+TAG=v0.1.0
+BASE="https://github.com/ozzy-labs/bootstrap/releases/download/${TAG}"
+
+# Download both the script and its checksum
+curl --proto '=https' --tlsv1.2 -fsSL "${BASE}/install.sh" -o install.sh
+curl --proto '=https' --tlsv1.2 -fsSL "${BASE}/install.sh.sha256" -o install.sh.sha256
+
+# Verify (must print "install.sh: OK")
+sha256sum -c install.sh.sha256
+
+# Run only after verification succeeds
+bash install.sh local
+```
+
+### 4.3 Clone-and-run (for contributors / forkers)
 
 ```bash
 git clone https://github.com/ozzy-labs/bootstrap.git
@@ -547,6 +601,63 @@ SETUP_LOG=/tmp/update.log ./install.sh update
 - Resilient — a single command failure emits a warning but does not abort the run
 - Log-friendly — honors the same `SETUP_LOG` convention as `setup-local-linux.sh`
 - Cross-OS — works equally on Linux (WSL2 / non-WSL) and macOS
+
+---
+
+### 6.5 doctor.sh
+
+Diagnoses the integrity of an existing bootstrapped environment without making any changes. Useful when something feels off after a system update, or before debugging a new project setup.
+
+**6.5.1 What It Checks**
+
+- **System tools** — `curl`, `git`, `unzip`, `xz`, `tar` are present
+- **mise** — binary exists at `~/.local/bin/mise`, PATH wiring includes `~/.local/bin` and the mise shims directory
+- **mise-managed tools** — `node`, `pnpm`, `python`, `uv` are under mise's global config
+- **chezmoi drift** — runs `chezmoi diff` against the repository's `dotfiles/` to detect divergence
+- **`~/.zshrc.d/`** — directory exists and is sourced from `~/.zshrc`
+
+**6.5.2 Exit Codes**
+
+| Code | Meaning |
+|---|---|
+| `0` | Healthy (no warnings, no errors) |
+| `1` | Warnings only (recommended tools missing, drift detected) |
+| `2` | Errors (required system tools missing) |
+
+This makes it useful in CI / health-check pipelines — `./install.sh doctor || echo "needs attention"` exits non-zero only when there's a real problem.
+
+**6.5.3 Usage**
+
+```bash
+# Via install.sh dispatcher
+./install.sh doctor
+
+# Direct script execution
+./scripts/doctor.sh
+```
+
+Each non-`✅` finding is paired with a copy-paste-ready fix hint. The Doctor never executes fixes itself — it tells you what to run, and you decide.
+
+**6.5.4 Sample Output**
+
+```
+🩺 bootstrap doctor を実行中...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📊 診断結果
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ [system-tools] curl: 利用可能
+✅ [system-tools] git: 利用可能
+✅ [mise] mise が利用可能 (2026.4.20 linux-x64)
+⚠️  [mise] PATH に mise shims が含まれていない（mise activate が必要）
+   ↳ 対処: eval "$(mise activate bash)"  # または zsh
+✅ [mise-tools] node は mise 管理下 (current: 24.15.0)
+⚠️  [chezmoi] ドットファイルに drift あり (12 行の差分)
+   ↳ 対処: chezmoi apply --source /path/to/bootstrap/dotfiles
+
+サマリー: ✅ 11  ⚠️  2  ❌ 0
+```
 
 ---
 
