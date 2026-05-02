@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2](https://github.com/ozzy-labs/bootstrap/compare/v0.1.1...v0.1.2) (2026-05-02)
+
+
+### Bug Fixes
+
+* **install:** replace add-apt-repository with direct PPA registration ([#109](https://github.com/ozzy-labs/bootstrap/issues/109)) ([6cc7c6b](https://github.com/ozzy-labs/bootstrap/commit/6cc7c6be9cc6454984b4135adc7fe13468b0711b))
+* **install:** retry add-apt-repository on Launchpad failures ([#107](https://github.com/ozzy-labs/bootstrap/issues/107)) ([40f14c8](https://github.com/ozzy-labs/bootstrap/commit/40f14c829b6bd6e98a03dbd2e484fc2d62abfa53))
+
 ## [0.1.1](https://github.com/ozzy-labs/bootstrap/compare/v0.1.0...v0.1.1) (2026-05-02)
 
 
